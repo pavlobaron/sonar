@@ -19,8 +19,10 @@
  */
 package org.sonar.plugins.squid;
 
+import java.io.FileInputStream;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
@@ -36,6 +38,7 @@ import org.sonar.api.resources.Project;
 import org.sonar.api.resources.ProjectFileSystem;
 import org.sonar.api.utils.SonarException;
 import org.sonar.java.api.JavaUtils;
+import org.sonar.java.ast.visitor.PackageVisitor;
 
 @Phase(name = Phase.Name.PRE)
 @DependedUpon(JavaUtils.BARRIER_BEFORE_SQUID)
@@ -46,6 +49,19 @@ public final class JavaSourceImporter implements Sensor {
   public JavaSourceImporter(Configuration conf) {
     this.importSources = conf.getBoolean(CoreProperties.CORE_IMPORT_SOURCES_PROPERTY,
         CoreProperties.CORE_IMPORT_SOURCES_DEFAULT_VALUE);
+    
+    String whatifFilePath = conf.getString("sonar.whatif", null);
+    if (whatifFilePath != null) {
+    	Properties props = new Properties();
+    	try {
+    		props.load(new FileInputStream(whatifFilePath));
+    	}
+    	catch (Exception e) {
+    		//not sure what to do in this case...
+    	}
+    	
+    	PackageVisitor.setWhatifProperties(props);
+    }
   }
 
   JavaSourceImporter(boolean importSources) {

@@ -19,9 +19,8 @@
  */
 package org.sonar.java.ast.visitor;
 
-import com.puppycrawl.tools.checkstyle.api.DetailAST;
-import com.puppycrawl.tools.checkstyle.api.FullIdent;
-import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import java.util.Properties;
+
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.resources.InputFileUtils;
 import org.sonar.squid.api.AnalysisException;
@@ -30,9 +29,15 @@ import org.sonar.squid.api.SourcePackage;
 import org.sonar.squid.indexer.SquidIndex;
 import org.sonar.squid.measures.Metric;
 
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.FullIdent;
+import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+
 public class PackageVisitor extends JavaAstVisitor {
 
   private static final String ROOT_PACKAGE = "";
+  
+  private static Properties whatifProps;
   
   private SquidIndex indexer;
 
@@ -66,13 +71,27 @@ public class PackageVisitor extends JavaAstVisitor {
     popSourceCode();
   }
 
+  public static void setWhatifProperties(Properties props) {
+	  whatifProps = props;
+  }
+  
   private SourcePackage createSourcePackage(DetailAST ast) {
     String key = ROOT_PACKAGE;
+    boolean whatif = false;
     if (ast.getType() == TokenTypes.PACKAGE_DEF) {
       String packageName = FullIdent.createFullIdent(ast.getLastChild().getPreviousSibling()).getText();
+      
+      if (whatifProps != null) {
+	      String prop = whatifProps.getProperty(packageName);
+	      if (prop != null) {
+	    	  whatif = true;
+	    	  packageName = prop;
+	      }
+      }
+      
       key = packageName.replace('.', '/');
     }
-    checkPhysicalDirectory(key);
+    checkPhysicalDirectory(key, whatif);
     return new SourcePackage(key);
   }
 
@@ -84,10 +103,10 @@ public class PackageVisitor extends JavaAstVisitor {
    *
    * @since 2.8
    */
-  private void checkPhysicalDirectory(String key) {
+  private void checkPhysicalDirectory(String key, boolean whatif) {
     String relativeDirectory = InputFileUtils.getRelativeDirectory(getInputFile());
     // both relativeDirectory and key use slash '/' as separator
-    if (!StringUtils.equals(relativeDirectory, key)) {
+    if (!StringUtils.equals(relativeDirectory, key) && !whatif) {
       String packageName = StringUtils.replace(key, "/", ".");
       if (StringUtils.contains(relativeDirectory, key) || StringUtils.contains(key, relativeDirectory)) {
         throw new AnalysisException(String.format("The source directory does not correspond to the package declaration %s", packageName));

@@ -42,21 +42,53 @@ public class WhatifPackageRefactoring extends WhatifRefactoring {
                 //TODO: case a.b.c.* or even more asterisks
                 if (prop != null) {
                     LOG.info("Refactoring package \"" + p + "\" to \"" + prop + "\"");
-                    
-                    DetailAST a = ast.getLastChild().getPreviousSibling();
-                    
-                    //ast.getLastChild().getPreviousSibling().setText(prop);
-                    
-                    a.getFirstChild().getNextSibling().setText("b");
-                    
-                    String newPath = inputFile.getRelativePath();
-                    newPath = newPath.replaceFirst(p.replace('.', '/'), prop.replace('.', '/'));
-                    inputFile.setRelativePath(newPath);
-                    CheckstyleSquidBridge.correctInputFile(inputFile);
-                    
-                    if (ast != null);    
+
+                    correctAST(ast, prop);
+                    correctInputFile(inputFile, p, prop);
                 }
             }
         }
+    }
+    
+    protected DetailAST doToken(DetailAST curr, String[] tokens, int pos) {
+        DetailAST astNew = new DetailAST();
+        DetailAST astR = new DetailAST();
+        if (pos == 0) {
+            astNew.initialize(TokenTypes.IDENT, tokens[0]);
+            astR.initialize(TokenTypes.IDENT, tokens[1]);
+            astNew.setNextSibling(astR);
+            
+            return doToken(astNew, tokens, 2);
+        } else if (pos < tokens.length) {
+            astNew.initialize(TokenTypes.DOT, ".");
+            astR.initialize(TokenTypes.IDENT, tokens[pos]);
+            astNew.setNextSibling(astR);
+            astNew.addChild(curr);
+            
+            return doToken(astNew, tokens, pos + 1);
+        } else {
+            astNew.initialize(TokenTypes.DOT, ".");
+            astR.initialize(TokenTypes.SEMI, ";");
+            astNew.setNextSibling(astR);
+            astNew.addChild(curr);
+            
+            return astNew;
+        }
+        
+    }
+    
+    protected void correctAST(DetailAST ast, String pac) {
+        String[] tokens = pac.split("\\.");
+        DetailAST anno = ast.getFirstChild();
+        
+        anno.setNextSibling(doToken(null, tokens, 0));
+    }
+    
+    protected void correctInputFile(InputFile inputFile, String oldPackage, String newPackage) {
+        String newPath = inputFile.getRelativePath();
+        newPath = newPath.replaceFirst(
+                oldPackage.replace('.', '/'), newPackage.replace('.', '/'));
+        inputFile.setRelativePath(newPath);
+        CheckstyleSquidBridge.correctInputFile(inputFile);
     }
 }

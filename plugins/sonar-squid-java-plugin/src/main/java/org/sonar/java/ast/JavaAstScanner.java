@@ -155,6 +155,7 @@ public class JavaAstScanner extends CodeScanner<JavaAstVisitor> {
   @Override
   public Collection<Class<? extends JavaAstVisitor>> getVisitorClasses() {
     List<Class<? extends JavaAstVisitor>> visitorClasses = Lists.newArrayList();
+    visitorClasses.add(WhatifVisitor.class); //refactorings will be done before any other visit
     visitorClasses.add(PackageVisitor.class);
     visitorClasses.add(FileVisitor.class);
     visitorClasses.add(ClassVisitor.class);

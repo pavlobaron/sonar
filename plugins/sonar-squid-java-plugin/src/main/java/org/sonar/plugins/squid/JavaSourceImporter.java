@@ -38,7 +38,7 @@ import org.sonar.api.resources.Project;
 import org.sonar.api.resources.ProjectFileSystem;
 import org.sonar.api.utils.SonarException;
 import org.sonar.java.api.JavaUtils;
-import org.sonar.java.ast.visitor.PackageVisitor;
+import org.sonar.java.whatif.WhatifRefactoring;
 
 @Phase(name = Phase.Name.PRE)
 @DependedUpon(JavaUtils.BARRIER_BEFORE_SQUID)
@@ -50,6 +50,8 @@ public final class JavaSourceImporter implements Sensor {
     this.importSources = conf.getBoolean(CoreProperties.CORE_IMPORT_SOURCES_PROPERTY,
         CoreProperties.CORE_IMPORT_SOURCES_DEFAULT_VALUE);
     
+    //since visitors have no idea about the configuration,
+    //provide the refactoring configuration to the whatif visitor
     String whatifFilePath = conf.getString("sonar.whatif", null);
     if (whatifFilePath != null) {
     	Properties props = new Properties();
@@ -60,7 +62,7 @@ public final class JavaSourceImporter implements Sensor {
     		//not sure what to do in this case...
     	}
     	
-    	PackageVisitor.setWhatifProperties(props);
+    	WhatifRefactoring.setWhatifProperties(props);
     }
   }
 

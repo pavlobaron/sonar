@@ -64,4 +64,11 @@ public interface InputFile {
    * @since 3.1
    */
   InputStream getInputStream() throws FileNotFoundException;
+  
+  /**
+   * Necessary to manipulate the path from outside, for example
+   * when doing package refactoring (moving classes around)
+   * 
+   */
+  void setRelativePath(String relativePath);
 }

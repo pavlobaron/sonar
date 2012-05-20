@@ -19,13 +19,16 @@
  */
 package org.sonar.java.ast;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
-import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.resources.InputFile;
 import org.sonar.java.ast.visitor.JavaAstVisitor;
 import org.sonar.squid.text.Source;
+
+import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
 
 /**
  * Delegate from Checkstyle {@link Check} to {@link JavaAstVisitor}s.
@@ -43,6 +46,12 @@ public class CheckstyleSquidBridge extends Check {
     bridgeContext = context;
   }
 
+  //necessary to manipulate file paths after package refactoring
+  //(moving classes) through whatif
+  public static void correctInputFile(InputFile correctFile) {
+      bridgeContext.correctInputFile(correctFile);
+  }
+  
   @Override
   public int[] getDefaultTokens() {
     return bridgeContext.getAllTokens();

@@ -19,15 +19,21 @@
  */
 package org.sonar.java.ast;
 
-import com.google.common.collect.Maps;
+import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import org.sonar.api.resources.InputFile;
 import org.sonar.java.ast.visitor.JavaAstVisitor;
 import org.sonar.java.recognizer.JavaFootprint;
 import org.sonar.java.squid.JavaSquidConfiguration;
 import org.sonar.squid.recognizer.CodeRecognizer;
 
-import java.io.File;
-import java.util.*;
+import com.google.common.collect.Maps;
 
 /**
  * This class helps to transfer additional information into {@link CheckstyleSquidBridge}.
@@ -66,6 +72,21 @@ class CheckstyleSquidBridgeContext {
       inputFilesByPath.put(inputFile.getFile().getAbsoluteFile(), inputFile);
     }
     return this;
+  }
+  
+  //necessary to manipulate file paths after package refactoring
+  //(moving classes) through whatif
+  public void correctInputFile(InputFile correctFile) {
+      Iterator<File> it = inputFilesByPath.keySet().iterator();
+      while (it.hasNext()) {
+          File f = it.next();
+          File fn = correctFile.getFile();
+          if (f.getAbsolutePath().equals(fn.getAbsolutePath())) {
+              inputFilesByPath.remove(f);
+              inputFilesByPath.put(fn, correctFile);
+              break;
+          }
+      } 
   }
 
   public int[] getAllTokens() {

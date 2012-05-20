@@ -112,6 +112,7 @@ public final class InputFileUtils {
   }
 
   static final class DefaultInputFile implements InputFile {
+
     private java.io.File basedir;
     private String relativePath;
 
@@ -128,6 +129,10 @@ public final class InputFileUtils {
       return new java.io.File(basedir, relativePath);
     }
 
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
+    }
+    
     /**
      * @since 3.1
      */
